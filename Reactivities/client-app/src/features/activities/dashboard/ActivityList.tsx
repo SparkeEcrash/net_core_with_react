@@ -1,17 +1,21 @@
-import React from "react";
+import React, {SyntheticEvent} from "react";
 import { Item, Button, Label, Segment } from "semantic-ui-react";
 import { IActivity } from "../../../app/models/activity";
 
 interface IProps {
   activities: IActivity[];
   selectActivity: (id: string) => void;
-  deleteActivity: (id: string) => void;
+	deleteActivity: (event: SyntheticEvent<HTMLButtonElement>, id: string) => void;
+	submitting: boolean;
+	target: string;
 }
 
 const ActivityList: React.FC<IProps> = ({
   activities,
   selectActivity,
-  deleteActivity,
+	deleteActivity,
+	submitting,
+	target
 }) => {
   return (
     <Segment clearing>
@@ -35,7 +39,14 @@ const ActivityList: React.FC<IProps> = ({
                   color="blue"
                 />
                 <Button
-                  onClick={() => deleteActivity(activity.id)}
+									name={activity.id}
+									//the loading prop determines when the loading spinner icon shows
+									//true is to display spinner and false is to hide
+									//when the button is clicked... the target is set to equal activity.id
+									//from the onClick function and sumitting is set to true and then false
+									//when the process is over
+									loading={target === activity.id && submitting}
+                  onClick={(e) => deleteActivity(e, activity.id)}
                   floated="right"
                   content="Delete"
                   color="red"

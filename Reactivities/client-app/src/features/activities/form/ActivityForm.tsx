@@ -1,20 +1,24 @@
-import React, { useState, FormEvent } from "react";
-import { Segment, Form, Button } from 'semantic-ui-react';
-import { IActivity } from '../../../app/models/activity';
-import { v4 as uuid } from 'uuid';
+import React, { SyntheticEvent, useState, FormEvent } from "react";
+import { Segment, Form, Button } from "semantic-ui-react";
+import { IActivity } from "../../../app/models/activity";
+import { v4 as uuid } from "uuid";
 
 interface IProps {
   setEditMode: (editMode: boolean) => void;
-	activity: IActivity | null;
-	createActivity: (activity: IActivity) => void;
-	editActivity: (activity: IActivity) => void;
+  activity: IActivity | null;
+  createActivity: (event: SyntheticEvent<HTMLFormElement>, activity: IActivity) => void;
+  editActivity: (event: SyntheticEvent<HTMLFormElement>, activity: IActivity) => void;
+	submitting: boolean;
+	target: string;
 }
 
 const ActivityForm: React.FC<IProps> = ({
   setEditMode,
-	activity: initialFormState,
-	createActivity,
-	editActivity
+  activity: initialFormState,
+  createActivity,
+  editActivity,
+	submitting,
+	target
 }) => {
   //activity is being renamed to initialFormState to avoid the variable name activity overlapping with other ones that come later in the function
   //this is object destructuring
@@ -35,22 +39,24 @@ const ActivityForm: React.FC<IProps> = ({
     }
   };
 
-	const [activity, setActivity] = useState<IActivity>(initializeForm);
-	
-	const handleSubmit = () => {
-		if (activity.id.length === 0) {
-			let newActivity = {
-				...activity,
-				id: uuid()
-			}
-			createActivity(newActivity);
-		} else {
-			editActivity(activity);
-		}
-	}
+  const [activity, setActivity] = useState<IActivity>(initializeForm);
 
-  const handleInputChange = (event: FormEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-		//event.currentTarget is needed because event.currentTarget is the react version of event.target which is required for typescript validating FormEvent<HTMLInputElement> type
+  const handleSubmit = (e: SyntheticEvent<HTMLFormElement>) => {
+    if (activity.id.length === 0) {
+      let newActivity = {
+        ...activity,
+        id: uuid(),
+      };
+      createActivity(e, newActivity);
+    } else {
+      editActivity(e, activity);
+    }
+  };
+
+  const handleInputChange = (
+    event: FormEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    //event.currentTarget is needed because event.currentTarget is the react version of event.target which is required for typescript validating FormEvent<HTMLInputElement> type
     const { name, value } = event.currentTarget;
     setActivity({ ...activity, [name]: value });
     // you are spreading the the object in "activity" and replacing the "title" property with the one that is listed after. You are creating a copy of activity with the replaced title.
@@ -58,7 +64,7 @@ const ActivityForm: React.FC<IProps> = ({
 
   return (
     <Segment clearing>
-      <Form onSubmit={handleSubmit}>
+      <Form name="activity-form" onSubmit={(e) => handleSubmit(e)}>
         <Form.Input
           onChange={handleInputChange}
           name="title"
@@ -97,7 +103,13 @@ const ActivityForm: React.FC<IProps> = ({
           placeholder="Venue"
           value={activity.venue}
         />
-        <Button floated="right" positive type="submit" content="Submit" />
+        <Button
+					loading={(target === 'activity-form') && submitting}
+          floated="right"
+          positive
+          type="submit"
+          content="Submit"
+        />
         <Button
           onClick={() => setEditMode(false)}
           floated="right"

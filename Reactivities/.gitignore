@@ -6,3 +6,4 @@ appsettings.json
 Persistence/Migrations
 db.lock
 client-app/src/app/others
+.vs

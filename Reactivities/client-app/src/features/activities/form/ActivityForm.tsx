@@ -1,28 +1,21 @@
-import React, { SyntheticEvent, useState, FormEvent } from "react";
+import React, { SyntheticEvent, useState, FormEvent, useContext } from "react";
 import { Segment, Form, Button } from "semantic-ui-react";
 import { IActivity } from "../../../app/models/activity";
 import { v4 as uuid } from "uuid";
+import ActivityStore from "../../../app/stores/activityStore";
+import { observer } from "mobx-react-lite";
 
 interface IProps {
-  setEditMode: (editMode: boolean) => void;
   activity: IActivity | null;
-  createActivity: (event: SyntheticEvent<HTMLFormElement>, activity: IActivity) => void;
-  editActivity: (event: SyntheticEvent<HTMLFormElement>, activity: IActivity) => void;
-	submitting: boolean;
-	target: string;
 }
 
 const ActivityForm: React.FC<IProps> = ({
-  setEditMode,
-  activity: initialFormState,
-  createActivity,
-  editActivity,
-	submitting,
-	target
+  activity: initialFormState
 }) => {
   //activity is being renamed to initialFormState to avoid the variable name activity overlapping with other ones that come later in the function
   //this is object destructuring
-
+	const activityStore = useContext(ActivityStore);
+	const { createActivity, editActivity, target, submitting, cancelFormOpen } = activityStore;
   const initializeForm = () => {
     if (initialFormState) {
       return initialFormState;
@@ -111,7 +104,7 @@ const ActivityForm: React.FC<IProps> = ({
           content="Submit"
         />
         <Button
-          onClick={() => setEditMode(false)}
+          onClick={cancelFormOpen}
           floated="right"
           type="button"
           content="Cancel"
@@ -121,4 +114,4 @@ const ActivityForm: React.FC<IProps> = ({
   );
 };
 
-export default ActivityForm;
+export default observer(ActivityForm);

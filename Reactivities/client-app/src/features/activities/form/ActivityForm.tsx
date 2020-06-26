@@ -1,38 +1,56 @@
-import React, { SyntheticEvent, useState, FormEvent, useContext } from "react";
+import React, { SyntheticEvent, useState, FormEvent, useContext, useEffect } from "react";
 import { Segment, Form, Button } from "semantic-ui-react";
 import { IActivity } from "../../../app/models/activity";
 import { v4 as uuid } from "uuid";
 import ActivityStore from "../../../app/stores/activityStore";
 import { observer } from "mobx-react-lite";
+import { RouteComponentProps } from "react-router-dom";
 
-interface IProps {
-  activity: IActivity | null;
+interface DetailParams {
+	id: string;
 }
 
-const ActivityForm: React.FC<IProps> = ({
-  activity: initialFormState
-}) => {
+const ActivityForm: React.FC<RouteComponentProps<DetailParams>> = ({ match, history }) => {
   //activity is being renamed to initialFormState to avoid the variable name activity overlapping with other ones that come later in the function
   //this is object destructuring
-	const activityStore = useContext(ActivityStore);
-	const { createActivity, editActivity, target, submitting, cancelFormOpen } = activityStore;
-  const initializeForm = () => {
-    if (initialFormState) {
-      return initialFormState;
-    } else {
-      return {
-        id: "",
-        title: "",
-        category: "",
-        description: "",
-        date: "",
-        city: "",
-        venue: "",
-      };
-    }
-  };
+  const activityStore = useContext(ActivityStore);
+  const {
+    createActivity,
+    editActivity,
+    target,
+    submitting,
+		activity: initialFormState,
+		loadActivity,
+		clearActivity
+	} = activityStore;
 
-  const [activity, setActivity] = useState<IActivity>(initializeForm);
+  const [activity, setActivity] = useState<IActivity>({
+		id: "",
+		title: "",
+		category: "",
+		description: "",
+		date: "",
+		city: "",
+		venue: "",
+	});
+
+	useEffect(() => {
+		if (match.params.id && activity.id.length === 0) {
+			//the second condition 'activity.id.length === 0' is needed to prevent setActivity from running
+			//after the form is submitted which triggers navigation to another page. 
+			//the setActivity will try to alter the state of an unmounted component which will create warning
+
+			//activity.id.length === 0 ensures activity had been set to activity in useState rather
+			//than being cleared as null in the clearActivity after it gets unmounted within the useEffect
+			//return function section
+			loadActivity(match.params.id).then(
+				() => initialFormState && setActivity(initialFormState)
+			);
+		}
+		return () => {
+			clearActivity()
+		}
+	}, [loadActivity, clearActivity, match.params.id, initialFormState, activity.id.length]);
 
   const handleSubmit = (e: SyntheticEvent<HTMLFormElement>) => {
     if (activity.id.length === 0) {
@@ -40,9 +58,9 @@ const ActivityForm: React.FC<IProps> = ({
         ...activity,
         id: uuid(),
       };
-      createActivity(e, newActivity);
+      createActivity(e, newActivity).then(() => history.push(`/activities/${newActivity.id}`));
     } else {
-      editActivity(e, activity);
+      editActivity(e, activity).then(() => history.push(`/activities/${activity.id}`));
     }
   };
 
@@ -97,14 +115,14 @@ const ActivityForm: React.FC<IProps> = ({
           value={activity.venue}
         />
         <Button
-					loading={(target === 'activity-form') && submitting}
+          loading={target === "activity-form" && submitting}
           floated="right"
           positive
           type="submit"
           content="Submit"
         />
         <Button
-          onClick={cancelFormOpen}
+          onClick={() => history.push('/activities')}
           floated="right"
           type="button"
           content="Cancel"

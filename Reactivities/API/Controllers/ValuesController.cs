@@ -37,6 +37,7 @@ namespace API.Controllers
         }
 
         // POST api/values
+				//[FromBody] means to look at the body of the post request for values
         [HttpPost]
         public void Post([FromBody] string value)
         {

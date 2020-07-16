@@ -1,7 +1,9 @@
 using System;
+using System.ComponentModel.DataAnnotations;
 using System.Threading;
 using System.Threading.Tasks;
 using Domain;
+using FluentValidation;
 using MediatR;
 using Persistence;
 
@@ -12,6 +14,8 @@ namespace Application.Activities
 		public class CommandObject : IRequest
 		{
 			public Guid Id { get; set; }
+
+			[Required]
 			public string Title { get; set; }
 			public string Description { get; set; }
 			public string Category { get; set; }
@@ -19,9 +23,19 @@ namespace Application.Activities
 			public string City { get; set; }
 			public string Venue { get; set; }
 		}
+
+		public class CommandValidator : AbstractValidator<CommandObject>
+		{
+			public CommandValidator()
+			{
+				RuleFor(x => x.Title).NotEmpty();
+			}
+		}
 		public class Handler : IRequestHandler<CommandObject>
 		{
 			private readonly DataContext _context;
+			//https://docs.microsoft.com/en-us/aspnet/core/fundamentals/dependency-injection?view=aspnetcore-3.1
+			//the "DataContext" dependency injection which creates "context" is registered in Startup.cs line 25
 			public Handler(DataContext context)
 			{
 				_context = context;
@@ -50,6 +64,7 @@ namespace Application.Activities
 	}
 }
 
+/*
 public class CommandObject : IRequest
 {
 	public Guid Id { get; set; }
@@ -87,3 +102,4 @@ public class Handler : IRequestHandler<CommandObject>
 		throw new Exception("Problem saving changes"); // if it fails
 	}
 }
+*/
